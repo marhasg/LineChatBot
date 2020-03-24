@@ -3,22 +3,28 @@ package com.dicoding.linebotjava.demo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.client.LineSignatureValidator;
+import com.linecorp.bot.client.MessageContentResponse;
 import com.linecorp.bot.model.Multicast;
 import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.ReplyMessage;
 import com.linecorp.bot.model.event.MessageEvent;
-import com.linecorp.bot.model.event.message.TextMessageContent;
+import com.linecorp.bot.model.event.message.*;
+import com.linecorp.bot.model.message.AudioMessage;
 import com.linecorp.bot.model.message.StickerMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.objectmapper.ModelObjectMapper;
 import com.linecorp.bot.model.profile.UserProfileResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -53,11 +59,26 @@ public class Controller {
             eventsModel.getEvents().forEach((event)->{
                 //kode replay message disini
                 if (event instanceof MessageEvent){
-                    MessageEvent messageEvent = (MessageEvent) event;
-                    TextMessageContent textMessageContent = (TextMessageContent) messageEvent.getMessage();
-                    replyText(messageEvent.getReplyToken(), textMessageContent.getText());
-                    replyText(messageEvent.getReplyToken(), "Ini Pesan Balasan");
-                    replySticker(messageEvent.getReplyToken(), "11539", "52114119");
+                    if (((MessageEvent) event).getMessage() instanceof AudioMessageContent
+                        || ((MessageEvent) event).getMessage() instanceof ImageMessageContent
+                        || ((MessageEvent) event).getMessage() instanceof VideoMessageContent
+                        || ((MessageEvent) event).getMessage() instanceof FileMessageContent
+                    ){
+                        String baseURL = "https://margoollabot.herokuapp.com";
+                        String contentURL = baseURL+"/content/"+((MessageEvent)event).getMessage().getId();
+                        String contentType = ((MessageEvent)event).getMessage().getClass().getSimpleName();
+                        String textMsg = contentType.substring(0, contentType.length() -14)
+                                +"yang kamu kirim bisa diakses dari link:\n"
+                                +contentURL;
+
+                        replyText(((MessageEvent)event).getReplyToken(), textMsg);
+                    } else {
+                        MessageEvent messageEvent = (MessageEvent) event;
+                        TextMessageContent textMessageContent = (TextMessageContent) messageEvent.getMessage();
+                        replyText(messageEvent.getReplyToken(), textMessageContent.getText());
+                        replyText(messageEvent.getReplyToken(), "Ini Pesan Balasan");
+                        replySticker(messageEvent.getReplyToken(), "11539", "52114119");
+                    }
                 }
             });
             return new ResponseEntity<>(HttpStatus.OK);
@@ -160,6 +181,33 @@ public class Controller {
             return lineMessagingClient.getProfile(userId).get();
         } catch (InterruptedException | ExecutionException e){
             throw new RuntimeException(e);
+        }
+    }
+
+    @RequestMapping(value = "/content/{id}", method = RequestMethod.GET)
+    public ResponseEntity content(
+            @PathVariable("id") String messageId
+    ){
+        MessageContentResponse messageContent = getContent(messageId);
+
+        if (messageContent !=null){
+            HttpHeaders headers = new HttpHeaders();
+            String[] mimeType = messageContent.getMimeType().split("/");
+            headers.setContentType(new MediaType(mimeType[0], mimeType[1]));
+
+            InputStream inputStream = messageContent.getStream();
+            InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
+
+            return new ResponseEntity<>(inputStream, headers, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    private MessageContentResponse getContent(String messageId) {
+        try {
+            return lineMessagingClient.getMessageContent(messageId).get();
+        } catch (InterruptedException | ExecutionException e){
+            throw  new RuntimeException(e);
         }
     }
 }
