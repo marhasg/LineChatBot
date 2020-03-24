@@ -3,6 +3,7 @@ package com.dicoding.linebotjava.demo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.client.LineSignatureValidator;
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.ReplyMessage;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+
+import static jdk.nashorn.internal.objects.NativeArray.push;
 
 @RestController
 public class Controller {
@@ -78,5 +81,31 @@ public class Controller {
         reply(replyMessage);
 //        replySticker(replyToken, 1, 1);
     }
+
+    @RequestMapping(value = "/pushmessage/{id}/{message}", method = RequestMethod.GET)
+    public ResponseEntity<String> pushmessage(
+            @PathVariable("id") String userId,
+            @PathVariable("message") String textMsg
+    ){
+        TextMessage textMessage = new TextMessage(textMsg);
+        PushMessage pushMessage = new PushMessage(userId, textMessage);
+        push(pushMessage);
+
+        return new ResponseEntity<String>("Push message:"+textMsg+"\nsent to:"+userId, HttpStatus.OK);
+    }
+
+    private void push(PushMessage pushMessage){
+        try {
+            lineMessagingClient.pushMessage(pushMessage).get();
+        } catch (InterruptedException | ExecutionException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+//    private void pushSticker(PushMessage pushMessage, String sourceId){
+//        StickerMessage stickerMessage = new StickerMessage(1,106);
+//        PushMessage pushMessage = new PushMessage(sourceId, stickerMessage);
+//        push(pushMessage);
+//    }
 
 }
