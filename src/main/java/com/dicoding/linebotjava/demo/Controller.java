@@ -3,6 +3,7 @@ package com.dicoding.linebotjava.demo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.client.LineSignatureValidator;
+import com.linecorp.bot.model.Multicast;
 import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.ReplyMessage;
 import com.linecorp.bot.model.event.MessageEvent;
@@ -17,6 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static jdk.nashorn.internal.objects.NativeArray.push;
@@ -99,6 +103,33 @@ public class Controller {
     private void push(PushMessage pushMessage){
         try {
             lineMessagingClient.pushMessage(pushMessage).get();
+        } catch (InterruptedException | ExecutionException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    @RequestMapping(value = "/multicast", method = RequestMethod.GET)
+    public ResponseEntity<String> multicast(){
+        String[] userIdList = {
+                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"};
+
+        Set<String> listUsers = new HashSet<String>(Arrays.asList(userIdList));
+        if (listUsers.size() > 0){
+            String textMsg = "Ini pesan Multicast";
+            sendMulticast(listUsers, textMsg);
+        }
+        return new ResponseEntity<String>(HttpStatus.OK);
+    }
+
+    private void sendMulticast(Set<String> listUsers, String textMsg) {
+        TextMessage message = new TextMessage(textMsg);
+        Multicast multicast = new Multicast(listUsers, message);
+
+        try {
+            lineMessagingClient.multicast(multicast).get();
         } catch (InterruptedException | ExecutionException e){
             throw new RuntimeException(e);
         }
