@@ -11,6 +11,7 @@ import com.linecorp.bot.model.event.message.TextMessageContent;
 import com.linecorp.bot.model.message.StickerMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.objectmapper.ModelObjectMapper;
+import com.linecorp.bot.model.profile.UserProfileResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -130,6 +131,33 @@ public class Controller {
 
         try {
             lineMessagingClient.multicast(multicast).get();
+        } catch (InterruptedException | ExecutionException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    @RequestMapping(value = "/profile", method = RequestMethod.GET)
+    public ResponseEntity<String> profile(
+//            @PathVariable("id") String userId //
+//            jika ingin userId dapat dimasukan secara manual
+    ){
+        String userId = "Isi dengan userId anda";
+        UserProfileResponse profile = getProfile(userId);
+
+        if (profile != null){
+            String profileName = profile.getDisplayName();
+            TextMessage textMessage = new TextMessage("Hello, "+ profileName);
+            PushMessage pushMessage = new PushMessage(userId, textMessage);
+            push(pushMessage);
+
+            return new ResponseEntity<String>("Hello, "+profileName, HttpStatus.OK);
+        }
+        return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
+    }
+
+    private UserProfileResponse getProfile(String userId) {
+        try {
+            return lineMessagingClient.getProfile(userId).get();
         } catch (InterruptedException | ExecutionException e){
             throw new RuntimeException(e);
         }
