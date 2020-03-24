@@ -51,7 +51,8 @@ public class Controller {
                     MessageEvent messageEvent = (MessageEvent) event;
                     TextMessageContent textMessageContent = (TextMessageContent) messageEvent.getMessage();
                     replyText(messageEvent.getReplyToken(), textMessageContent.getText());
-
+                    replyText(messageEvent.getReplyToken(), "Ini Pesan Balasan");
+                    replySticker(messageEvent.getReplyToken(), "11539", "52114119");
                 }
             });
             return new ResponseEntity<>(HttpStatus.OK);
@@ -73,13 +74,11 @@ public class Controller {
         TextMessage textMessage = new TextMessage(messageToUser);
         ReplyMessage replyMessage = new ReplyMessage(replyToken, textMessage);
         reply(replyMessage);
-//        replyText(replyToken, "Ini Pesan Balasan");
     }
    private void replySticker(String replyToken, String packageId, String stickerId){
         StickerMessage stickerMessage = new StickerMessage(packageId, stickerId);
         ReplyMessage replyMessage = new ReplyMessage(replyToken, stickerMessage);
         reply(replyMessage);
-//        replySticker(replyToken, 1, 1);
     }
 
     @RequestMapping(value = "/pushmessage/{id}/{message}", method = RequestMethod.GET)
@@ -107,5 +106,7 @@ public class Controller {
 //        PushMessage pushMessage = new PushMessage(sourceId, stickerMessage);
 //        push(pushMessage);
 //    }
+
+
 
 }
