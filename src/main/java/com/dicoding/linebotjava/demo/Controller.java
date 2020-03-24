@@ -72,7 +72,7 @@ public class Controller {
         reply(replyMessage);
 //        replyText(replyToken, "Ini Pesan Balasan");
     }
-re    private void replySticker(String replyToken, String packageId, String stickerId){
+   private void replySticker(String replyToken, String packageId, String stickerId){
         StickerMessage stickerMessage = new StickerMessage(packageId, stickerId);
         ReplyMessage replyMessage = new ReplyMessage(replyToken, stickerMessage);
         reply(replyMessage);
