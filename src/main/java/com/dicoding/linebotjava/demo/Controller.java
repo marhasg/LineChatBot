@@ -89,6 +89,9 @@ public class Controller {
         TextMessage textMessage = new TextMessage(textMsg);
         PushMessage pushMessage = new PushMessage(userId, textMessage);
         push(pushMessage);
+        StickerMessage stickerMessage = new StickerMessage("11539","52114130");
+        PushMessage pushMessage1 = new PushMessage(userId, stickerMessage);
+        push(pushMessage1);
 
         return new ResponseEntity<String>("Push message:"+textMsg+"\nsent to:"+userId, HttpStatus.OK);
     }
@@ -100,13 +103,4 @@ public class Controller {
             throw new RuntimeException(e);
         }
     }
-
-//    private void pushSticker(PushMessage pushMessage, String sourceId){
-//        StickerMessage stickerMessage = new StickerMessage(1,106);
-//        PushMessage pushMessage = new PushMessage(sourceId, stickerMessage);
-//        push(pushMessage);
-//    }
-
-
-
 }
